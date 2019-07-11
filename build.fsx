@@ -12,10 +12,14 @@ open Fake.Core
 open Fake.DotNet
 open Fake.IO
 
+Target.initEnvironment ()
+
 let serverPath = Path.getFullName "./src/Server"
 let clientPath = Path.getFullName "./src/Client"
 let clientDeployPath = Path.combine clientPath "deploy"
 let deployDir = Path.getFullName "./deploy"
+
+let release = ReleaseNotes.load "RELEASE_NOTES.md"
 
 let platformTool tool winTool =
     let tool = if Environment.isUnix then tool else winTool
@@ -66,11 +70,15 @@ Target.create "InstallClient" (fun _ ->
     printfn "Yarn version:"
     runTool yarnTool "--version" __SOURCE_DIRECTORY__
     runTool yarnTool "install --frozen-lockfile" __SOURCE_DIRECTORY__
-    runDotNet "restore" clientPath
 )
 
 Target.create "Build" (fun _ ->
     runDotNet "build" serverPath
+    Shell.regexReplaceInFileWithEncoding
+        "let app = \".+\""
+       ("let app = \"" + release.NugetVersion + "\"")
+        System.Text.Encoding.UTF8
+        (Path.combine clientPath "Version.fs")
     runTool yarnTool "webpack-cli -p" __SOURCE_DIRECTORY__
 )
 
@@ -116,28 +124,4 @@ open Fake.Core.TargetOperators
     ==> "InstallClient"
     ==> "Run"
 
-//Target.runOrDefaultWithArguments "Build"
-
-
-
-open Fake.IO.Globbing.Operators
-
-
-Target.create "Clean2" (fun _ ->
-    !! "src/**/bin"
-    ++ "src/**/obj"
-    |> Shell.cleanDirs
-)
-
-Target.create "Build2" (fun _ ->
-    !! "src/**/*.*proj"
-    |> Seq.iter (DotNet.build id)
-)
-
-Target.create "All" ignore
-
-"Clean2"
-  ==> "Build2"
-  ==> "All"
-
-Target.runOrDefault "All"
+Target.runOrDefaultWithArguments "Build"
