@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[3],{46:function(e,t,c){"use strict";c.r(t);var a=c(5),n=c(17),o=c(10),l=c(18);const s=Object(l.a)(function(e){return Object(o.a)([a.createElement("h2",{className:"text-blue-400"},"Hello World"),Object(n.a)("prismcli example")])},"Home");t.default=s}}]);
